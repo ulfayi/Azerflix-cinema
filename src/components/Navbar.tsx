@@ -75,7 +75,7 @@ export function Navbar({
             <path d="M10.5 8.25L20 14L10.5 19.75V8.25Z" fill="#FFFFFF" />
           </svg>
           <span className="truncate font-display text-base font-extrabold tracking-tight sm:text-xl">
-            <span className="text-accent">Netflix</span>{" "}
+            <span className="text-accent">Azerflix</span>{" "}
             <span className="text-foreground">Azərbaycan</span>
           </span>
         </Link>

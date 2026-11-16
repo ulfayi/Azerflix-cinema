@@ -15,7 +15,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Netflix Azərbaycan — Azərbaycan Filmləri Kataloqu",
+  title: "Azerflix Azərbaycan — Azərbaycan Filmləri Kataloqu",
   description:
     "Azərbaycan kinematoqrafiyasının seçilmiş filmləri üçün qeyri-rəsmi tədris məqsədli kataloq. Netflix ilə heç bir əlaqəsi yoxdur.",
 };

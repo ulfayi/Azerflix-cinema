@@ -87,7 +87,7 @@ export function MovieDetailModal({
   const [imgSrc, setImgSrc] = useState("");
 
   const playerWrapperRef = useRef<HTMLDivElement>(null);
-  const ytContainerRef = useRef<HTMLDivElement>(null);
+  const ytHostRef = useRef<HTMLDivElement>(null);
   const ytPlayerRef = useRef<YTPlayerInstance | null>(null);
   const isSeekingRef = useRef(false);
   const seekLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -112,15 +112,17 @@ export function MovieDetailModal({
     };
   }, []);
 
-  // YouTube IFrame API (isSeekingRef istifadə edildiyi üçün pleyer sıfırlanmır)
+  // YouTube IFrame API: YT.Player öz elementini iframe ilə əvəz etdiyi üçün
+  // React DOM xətası (removeChild) verməməsi məqsədilə imperativ child div yaradılır
   useEffect(() => {
-    if (!movie || !isPlaying || !ytContainerRef.current) return;
+    if (!movie || !isPlaying || !ytHostRef.current) return;
 
+    const host = ytHostRef.current;
     let cancelled = false;
     let timeInterval: ReturnType<typeof setInterval> | null = null;
 
     const initPlayer = () => {
-      if (cancelled || !ytContainerRef.current || !window.YT?.Player) return;
+      if (cancelled || !host || !window.YT?.Player) return;
 
       if (ytPlayerRef.current) {
         try {
@@ -131,7 +133,13 @@ export function MovieDetailModal({
         ytPlayerRef.current = null;
       }
 
-      ytPlayerRef.current = new window.YT.Player(ytContainerRef.current, {
+      host.innerHTML = "";
+      const playerNode = document.createElement("div");
+      playerNode.style.width = "100%";
+      playerNode.style.height = "100%";
+      host.appendChild(playerNode);
+
+      ytPlayerRef.current = new window.YT.Player(playerNode, {
         videoId: movie.youtubeId,
         playerVars: {
           autoplay: 1,
@@ -145,17 +153,21 @@ export function MovieDetailModal({
         events: {
           onReady: (event) => {
             if (cancelled) return;
-            const iframe = event.target.getIframe();
-            iframe.setAttribute(
-              "allow",
-              "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-            );
-            iframe.setAttribute("allowfullscreen", "true");
-            iframe.style.width = "100%";
-            iframe.style.height = "100%";
+            try {
+              const iframe = event.target.getIframe();
+              iframe.setAttribute(
+                "allow",
+                "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              );
+              iframe.setAttribute("allowfullscreen", "true");
+              iframe.style.width = "100%";
+              iframe.style.height = "100%";
 
-            const total = event.target.getDuration();
-            if (total > 0) setDuration(total);
+              const total = event.target.getDuration();
+              if (total > 0) setDuration(total);
+            } catch {
+              // ignore
+            }
 
             timeInterval = setInterval(() => {
               if (!ytPlayerRef.current || isSeekingRef.current) return;
@@ -172,8 +184,12 @@ export function MovieDetailModal({
           onStateChange: (event) => {
             if (cancelled) return;
             setIsVideoPaused(event.data === 2);
-            const dur = event.target.getDuration();
-            if (dur > 0) setDuration(dur);
+            try {
+              const dur = event.target.getDuration();
+              if (dur > 0) setDuration(dur);
+            } catch {
+              // ignore
+            }
           },
         },
       });
@@ -210,6 +226,7 @@ export function MovieDetailModal({
         }
         ytPlayerRef.current = null;
       }
+      host.innerHTML = "";
     };
   }, [movie, isPlaying]);
 
@@ -333,7 +350,7 @@ export function MovieDetailModal({
             }`}
           >
             {isPlaying ? (
-              <div ref={ytContainerRef} className="h-full w-full" />
+              <div ref={ytHostRef} className="h-full w-full" />
             ) : (
               <>
                 <Image
@@ -368,7 +385,6 @@ export function MovieDetailModal({
 
           {isPlaying && (
             <div className="border-t border-white/10 bg-[#0f0f0f] px-3 py-2.5 sm:px-4">
-              {/* Sürüşdürülən zaman xətti */}
               <div className="flex items-center gap-2.5 sm:gap-3">
                 <span className="w-11 shrink-0 text-[11px] font-medium tabular-nums text-foreground-secondary sm:w-14 sm:text-xs">
                   {formatTime(currentTime)}
@@ -408,7 +424,6 @@ export function MovieDetailModal({
                 </span>
               </div>
 
-              {/* İdarəetmə düymələri */}
               <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   <button

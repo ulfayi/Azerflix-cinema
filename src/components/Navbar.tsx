@@ -55,7 +55,7 @@ export function Navbar({
       className={`fixed inset-x-0 top-0 z-40 w-full transition-all duration-300 ${
         isScrolled
           ? "border-b border-border-subtle bg-background/95 shadow-sm backdrop-blur-md"
-          : "bg-gradient-to-b from-black/80 via-black/40 to-transparent"
+          : "bg-gradient-to-b from-background/95 via-background/70 to-transparent"
       }`}
     >
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
@@ -78,12 +78,8 @@ export function Navbar({
             onClick={() => onSelectSection?.("home")}
             className={`relative shrink-0 py-2 text-sm font-semibold transition-colors ${
               isHomeActive
-                ? isScrolled
-                  ? "text-foreground"
-                  : "text-white"
-                : isScrolled
-                  ? "text-foreground-secondary hover:text-foreground"
-                  : "text-white/80 hover:text-white"
+                ? "text-foreground"
+                : "text-foreground-secondary hover:text-foreground"
             }`}
           >
             Ana səhifə
@@ -101,12 +97,8 @@ export function Navbar({
               onClick={() => onSelectSection("movies")}
               className={`relative shrink-0 py-2 text-sm font-semibold transition-colors ${
                 isMoviesActive
-                  ? isScrolled
-                    ? "text-foreground"
-                    : "text-white"
-                  : isScrolled
-                    ? "text-foreground-secondary hover:text-foreground"
-                    : "text-white/80 hover:text-white"
+                  ? "text-foreground"
+                  : "text-foreground-secondary hover:text-foreground"
               }`}
             >
               Filmlər
@@ -120,11 +112,7 @@ export function Navbar({
           ) : (
             <Link
               href="/#filmler"
-              className={`relative shrink-0 py-2 text-sm font-semibold transition-colors ${
-                isScrolled
-                  ? "text-foreground-secondary hover:text-foreground"
-                  : "text-white/80 hover:text-white"
-              }`}
+              className="relative shrink-0 py-2 text-sm font-semibold text-foreground-secondary transition-colors hover:text-foreground"
             >
               Filmlər
             </Link>
@@ -157,12 +145,8 @@ export function Navbar({
             href="/siyahim"
             className={`relative inline-flex shrink-0 items-center gap-1.5 py-2 text-sm font-semibold transition-colors ${
               isWatchlistPage
-                ? isScrolled
-                  ? "text-foreground"
-                  : "text-white"
-                : isScrolled
-                  ? "text-foreground-secondary hover:text-foreground"
-                  : "text-white/80 hover:text-white"
+                ? "text-foreground"
+                : "text-foreground-secondary hover:text-foreground"
             }`}
           >
             <span>Mənim siyahım</span>

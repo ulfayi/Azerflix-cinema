@@ -44,7 +44,7 @@ export function Hero({
   return (
     <section
       aria-label="Önə çıxarılan film"
-      className="relative flex min-h-[72vh] w-full items-end overflow-hidden bg-black sm:min-h-[78vh] lg:min-h-[84vh]"
+      className="relative flex min-h-[72vh] w-full items-end overflow-hidden bg-background transition-colors duration-300 sm:min-h-[78vh] lg:min-h-[84vh]"
     >
       <div className="absolute inset-0">
         <Image
@@ -60,40 +60,40 @@ export function Hero({
         />
       </div>
 
-      {/* Həm Dark, həm Light rejimdə mətni tam oxunaqlı saxlayan kinematoqrafik kölgə */}
+      {/* Həm Dark, həm Light rejimə uyğunlaşan dinamik fon gradientləri */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/40"
+        className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/35"
       />
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent"
       />
 
       <div className="relative z-10 mx-auto w-full max-w-[1440px] px-4 pb-14 pt-28 sm:px-6 sm:pb-16 lg:px-10 lg:pb-20">
         <div className="max-w-xl">
-          <p className="text-xs font-medium text-neutral-300 sm:text-sm">
+          <p className="text-xs font-semibold text-foreground-secondary sm:text-sm">
             Müddət: {currentMovie.duration} • {currentMovie.year}
           </p>
 
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-            <span className="inline-flex items-center gap-1 font-bold text-white">
+            <span className="inline-flex items-center gap-1 font-bold text-foreground">
               <Star
-                className="h-4 w-4 fill-amber-400 text-amber-400"
+                className="h-4 w-4 fill-amber-500 text-amber-500"
                 aria-hidden="true"
               />
               {currentMovie.rating.toFixed(1)}
             </span>
-            <span className="text-neutral-300">
+            <span className="font-medium text-foreground-secondary">
               {currentMovie.genres.join(" | ")}
             </span>
           </div>
 
-          <h1 className="mt-2.5 font-display text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mt-2.5 font-display text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             {currentMovie.title}
           </h1>
 
-          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-neutral-200 sm:mt-4 sm:text-base">
+          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground-secondary sm:mt-4 sm:text-base">
             {currentMovie.description}
           </p>
 
@@ -114,7 +114,7 @@ export function Hero({
               className={`inline-flex h-11 items-center justify-center gap-2 rounded-full border px-6 text-xs font-bold uppercase tracking-wider backdrop-blur-md transition-all active:scale-[0.98] sm:h-12 sm:text-sm ${
                 saved
                   ? "border-accent bg-accent text-white shadow-md shadow-accent/30 hover:bg-accent-hover"
-                  : "border-white/30 bg-black/60 text-white hover:border-accent hover:bg-accent/90"
+                  : "border-accent/40 bg-background/85 text-foreground hover:border-accent hover:bg-accent hover:text-white"
               }`}
             >
               {saved ? (
@@ -124,7 +124,7 @@ export function Hero({
                 </>
               ) : (
                 <>
-                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  <Plus className="h-4 w-4 text-accent group-hover:text-white" aria-hidden="true" />
                   <span>Siyahıya əlavə et</span>
                 </>
               )}
@@ -147,7 +147,7 @@ export function Hero({
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   idx === activeIndex
                     ? "w-8 bg-accent"
-                    : "w-5 bg-white/35 hover:bg-white/60"
+                    : "w-5 bg-foreground/30 hover:bg-foreground/55"
                 }`}
               />
             ))}

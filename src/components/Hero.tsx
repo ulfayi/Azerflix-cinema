@@ -44,7 +44,7 @@ export function Hero({
   return (
     <section
       aria-label="Önə çıxarılan film"
-      className="relative flex min-h-[72vh] w-full items-end overflow-hidden bg-background sm:min-h-[78vh] lg:min-h-[84vh]"
+      className="relative flex min-h-[72vh] w-full items-end overflow-hidden bg-black sm:min-h-[78vh] lg:min-h-[84vh]"
     >
       <div className="absolute inset-0">
         <Image
@@ -60,19 +60,19 @@ export function Hero({
         />
       </div>
 
-      {/* Şəkildəki kimi tünd gradient overlay-lər */}
+      {/* Həm Dark, həm Light rejimdə mətni tam oxunaqlı saxlayan kinematoqrafik kölgə */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-black/45"
+        className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/40"
       />
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent"
+        className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-transparent"
       />
 
       <div className="relative z-10 mx-auto w-full max-w-[1440px] px-4 pb-14 pt-28 sm:px-6 sm:pb-16 lg:px-10 lg:pb-20">
         <div className="max-w-xl">
-          <p className="text-xs font-medium text-foreground-secondary sm:text-sm">
+          <p className="text-xs font-medium text-neutral-300 sm:text-sm">
             Müddət: {currentMovie.duration} • {currentMovie.year}
           </p>
 
@@ -84,7 +84,7 @@ export function Hero({
               />
               {currentMovie.rating.toFixed(1)}
             </span>
-            <span className="text-foreground-secondary">
+            <span className="text-neutral-300">
               {currentMovie.genres.join(" | ")}
             </span>
           </div>
@@ -93,7 +93,7 @@ export function Hero({
             {currentMovie.title}
           </h1>
 
-          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground-secondary sm:mt-4 sm:text-base">
+          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-neutral-200 sm:mt-4 sm:text-base">
             {currentMovie.description}
           </p>
 
@@ -113,13 +113,13 @@ export function Hero({
               aria-pressed={saved}
               className={`inline-flex h-11 items-center justify-center gap-2 rounded-full border px-6 text-xs font-bold uppercase tracking-wider backdrop-blur-md transition-all active:scale-[0.98] sm:h-12 sm:text-sm ${
                 saved
-                  ? "border-accent bg-accent/25 text-white hover:bg-accent/35"
-                  : "border-white/25 bg-black/55 text-white hover:border-white/45 hover:bg-black/75"
+                  ? "border-accent bg-accent text-white shadow-md shadow-accent/30 hover:bg-accent-hover"
+                  : "border-white/30 bg-black/60 text-white hover:border-accent hover:bg-accent/90"
               }`}
             >
               {saved ? (
                 <>
-                  <Check className="h-4 w-4 text-accent" aria-hidden="true" />
+                  <Check className="h-4 w-4 text-white" aria-hidden="true" />
                   <span>Siyahımdadır</span>
                 </>
               ) : (
@@ -144,10 +144,10 @@ export function Hero({
                 type="button"
                 onClick={() => setActiveIndex(idx)}
                 aria-label={`${m.title} filminə keç`}
-                className={`h-1 rounded-full transition-all duration-300 ${
+                className={`h-1.5 rounded-full transition-all duration-300 ${
                   idx === activeIndex
-                    ? "w-8 bg-white"
-                    : "w-5 bg-white/30 hover:bg-white/55"
+                    ? "w-8 bg-accent"
+                    : "w-5 bg-white/35 hover:bg-white/60"
                 }`}
               />
             ))}

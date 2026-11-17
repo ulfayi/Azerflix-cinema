@@ -2,10 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+html[data-theme="dark"] {
   --bg-primary: #0a0a0a;
   --bg-secondary: #141414;
-  --bg-elevated: #1c1c1c;
+  --bg-elevated: #1f1f1f;
   --text-primary: #f5f5f5;
   --text-secondary: #a3a3a3;
   --text-muted: #737373;
@@ -14,17 +15,30 @@
   --border-subtle: rgba(255, 255, 255, 0.1);
 }
 
+/* Göz yormayan yumşaq, isti tonlu İşıqlı (Light) rejim */
+html[data-theme="light"] {
+  --bg-primary: #ede9e0;
+  --bg-secondary: #e3ded3;
+  --bg-elevated: #d6d0c2;
+  --text-primary: #1c1917;
+  --text-secondary: #44403c;
+  --text-muted: #78716c;
+  --accent-primary: #e50914;
+  --accent-hover: #c90812;
+  --border-subtle: rgba(28, 25, 23, 0.14);
+}
+
 html,
 body {
   max-width: 100%;
   overflow-x: hidden;
-  color-scheme: dark;
   scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 ::selection {
@@ -42,10 +56,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2e2e2e;
+  background: #525252;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #454545;
+  background: #737373;
 }

@@ -160,18 +160,19 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
         >
           {/* Aktiv axtarış və ya janr məlumatı */}
           {(isSearching || selectedGenre) && (
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border-subtle bg-background-secondary/80 px-4 py-2.5 text-xs sm:text-sm">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border-subtle bg-background-secondary px-4 py-2.5 text-xs sm:text-sm">
               <div className="flex flex-wrap items-center gap-2 text-foreground-secondary">
                 {selectedGenre && (
                   <span>
-                    Janr: <strong className="text-white">{selectedGenre}</strong>
+                    Janr:{" "}
+                    <strong className="text-foreground">{selectedGenre}</strong>
                   </span>
                 )}
                 {selectedGenre && isSearching && <span aria-hidden="true">•</span>}
                 {isSearching && (
                   <span>
                     Axtarış:{" "}
-                    <strong className="text-white">
+                    <strong className="text-foreground">
                       &ldquo;{searchQuery.trim()}&rdquo;
                     </strong>
                   </span>
@@ -183,7 +184,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-accent"
+                className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-accent-hover"
               >
                 <RotateCcw className="h-3 w-3" aria-hidden="true" />
                 <span>Sıfırla</span>
@@ -201,15 +202,15 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex shrink-0 items-center gap-2 pb-2 text-xs font-semibold transition-colors sm:gap-2.5 sm:text-base ${
+                  className={`relative flex shrink-0 items-center gap-2 pb-2 text-xs font-bold transition-colors sm:gap-2.5 sm:text-base ${
                     isActive
-                      ? "text-white"
-                      : "text-foreground-secondary hover:text-white"
+                      ? "text-foreground"
+                      : "text-foreground-secondary hover:text-foreground"
                   }`}
                 >
                   <Icon
                     className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                      isActive ? "text-white" : "text-foreground-muted"
+                      isActive ? "text-accent" : "text-foreground-muted"
                     }`}
                     aria-hidden="true"
                   />
@@ -237,7 +238,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                   })
                 }
                 aria-label="Janrları sola sürüşdür"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-background-secondary text-foreground-secondary transition-colors hover:border-white/30 hover:text-white sm:h-9 sm:w-9"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-sm transition-colors hover:bg-accent-hover sm:h-9 sm:w-9"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -254,7 +255,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                 className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-all sm:px-5 sm:py-2 sm:text-sm ${
                   selectedGenre === ""
                     ? "bg-accent text-white shadow-md shadow-accent/30"
-                    : "bg-background-elevated text-foreground-secondary hover:bg-white/15 hover:text-white"
+                    : "border border-border-subtle bg-background-elevated text-foreground-secondary hover:border-accent hover:text-foreground"
                 }`}
               >
                 Hamısı
@@ -271,7 +272,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                     className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-all sm:px-5 sm:py-2 sm:text-sm ${
                       isSelected
                         ? "bg-accent text-white shadow-md shadow-accent/30"
-                        : "bg-background-elevated text-foreground-secondary hover:bg-white/15 hover:text-white"
+                        : "border border-border-subtle bg-background-elevated text-foreground-secondary hover:border-accent hover:text-foreground"
                     }`}
                   >
                     {genre}
@@ -290,7 +291,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                   })
                 }
                 aria-label="Janrları sağa sürüşdür"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-background-secondary text-foreground-secondary transition-colors hover:border-white/30 hover:text-white sm:h-9 sm:w-9"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-sm transition-colors hover:bg-accent-hover sm:h-9 sm:w-9"
               >
                 <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -304,7 +305,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                 <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
                   Təsadüfi tövsiyə
                 </span>
-                <h3 className="mt-0.5 truncate font-display text-lg font-bold text-white">
+                <h3 className="mt-0.5 truncate font-display text-lg font-bold text-foreground">
                   {recommendedMovie.title}
                 </h3>
                 <p className="text-xs text-foreground-secondary">
@@ -315,7 +316,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                 <button
                   type="button"
                   onClick={() => openMovieModal(recommendedMovie, false)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-bold text-black hover:bg-white/90"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-xs font-bold text-white shadow-sm hover:bg-accent-hover"
                 >
                   <Info className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Ətraflı</span>
@@ -324,7 +325,7 @@ export function HomeClient({ allMovies, heroMovies }: HomeClientProps) {
                   type="button"
                   onClick={() => setRecommendedMovie(null)}
                   aria-label="Tövsiyəni bağla"
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle text-foreground-secondary hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle text-foreground-secondary hover:border-accent hover:text-accent"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>

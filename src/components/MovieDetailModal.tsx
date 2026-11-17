@@ -81,7 +81,8 @@ export function MovieDetailModal({
 }: MovieDetailModalProps) {
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isVideoPaused, setIsVideoPaused] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isNativeFullscreen, setIsNativeFullscreen] = useState(false);
+  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [imgSrc, setImgSrc] = useState("");
@@ -92,10 +93,13 @@ export function MovieDetailModal({
   const isSeekingRef = useRef(false);
   const seekLockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const isFullscreen = isNativeFullscreen || isPseudoFullscreen;
+
   useEffect(() => {
     if (!movie) return;
     setIsPlaying(autoPlay);
     setIsVideoPaused(false);
+    setIsPseudoFullscreen(false);
     setCurrentTime(0);
     setDuration(0);
     setImgSrc(movie.thumbnail);
@@ -103,17 +107,27 @@ export function MovieDetailModal({
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement));
+      const doc = document as Document & { webkitFullscreenElement?: Element };
+      const active = Boolean(
+        doc.fullscreenElement || doc.webkitFullscreenElement
+      );
+      setIsNativeFullscreen(active);
+      if (!active) {
+        setIsPseudoFullscreen(false);
+      }
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
     };
   }, []);
 
-  // YouTube IFrame API: YT.Player öz elementini iframe ilə əvəz etdiyi üçün
-  // React DOM xətası (removeChild) verməməsi məqsədilə imperativ child div yaradılır
   useEffect(() => {
     if (!movie || !isPlaying || !ytHostRef.current) return;
 
@@ -160,6 +174,7 @@ export function MovieDetailModal({
                 "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
               );
               iframe.setAttribute("allowfullscreen", "true");
+              iframe.setAttribute("webkitallowfullscreen", "true");
               iframe.style.width = "100%";
               iframe.style.height = "100%";
 
@@ -231,29 +246,60 @@ export function MovieDetailModal({
   }, [movie, isPlaying]);
 
   const exitFullscreenIfActive = useCallback(async () => {
-    if (document.fullscreenElement) {
+    setIsPseudoFullscreen(false);
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element;
+      webkitExitFullscreen?: () => Promise<void> | void;
+    };
+
+    if (doc.fullscreenElement && doc.exitFullscreen) {
       try {
-        await document.exitFullscreen();
+        await doc.exitFullscreen();
+      } catch {
+        // ignore
+      }
+    } else if (doc.webkitFullscreenElement && doc.webkitExitFullscreen) {
+      try {
+        await doc.webkitExitFullscreen();
       } catch {
         // ignore
       }
     }
   }, []);
 
+  // Həm Android/Desktop (Native Fullscreen), həm də iPhone 15 Pro / iOS Safari (Viewport Fullscreen) dəstəyi
   const toggleFullscreen = useCallback(async () => {
-    const container = playerWrapperRef.current;
+    if (isFullscreen) {
+      await exitFullscreenIfActive();
+      return;
+    }
+
+    const container = playerWrapperRef.current as
+      | (HTMLDivElement & {
+          webkitRequestFullscreen?: () => Promise<void> | void;
+        })
+      | null;
+
     if (!container) return;
 
-    try {
-      if (!document.fullscreenElement) {
+    const doc = document as Document & { webkitFullscreenEnabled?: boolean };
+    const canUseNative =
+      Boolean(doc.fullscreenEnabled || doc.webkitFullscreenEnabled) &&
+      typeof container.requestFullscreen === "function";
+
+    if (canUseNative) {
+      try {
         await container.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
+        return;
+      } catch {
+        setIsPseudoFullscreen(true);
+        return;
       }
-    } catch {
-      // ignore
     }
-  }, []);
+
+    // iPhone iOS Safari üçün kəsintisiz tam ekran rejimi
+    setIsPseudoFullscreen(true);
+  }, [isFullscreen, exitFullscreenIfActive]);
 
   const handleClose = useCallback(async () => {
     await exitFullscreenIfActive();
@@ -267,8 +313,12 @@ export function MovieDetailModal({
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !document.fullscreenElement) {
-        onClose();
+      if (e.key === "Escape") {
+        if (isPseudoFullscreen) {
+          setIsPseudoFullscreen(false);
+        } else if (!document.fullscreenElement) {
+          onClose();
+        }
       }
     };
 
@@ -278,7 +328,7 @@ export function MovieDetailModal({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [movie, onClose]);
+  }, [movie, isPseudoFullscreen, onClose]);
 
   const handleTogglePlayPause = () => {
     const player = ytPlayerRef.current;
@@ -325,28 +375,57 @@ export function MovieDetailModal({
           void handleClose();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-2.5 sm:p-6"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/85 ${
+        isFullscreen ? "p-0" : "p-2.5 sm:p-6"
+      }`}
     >
-      <div className="relative max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-border-subtle bg-background-secondary shadow-2xl shadow-black">
-        <button
-          type="button"
-          onClick={() => void handleClose()}
-          aria-label="Modalı bağla"
-          className="absolute right-3 top-3 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white transition-colors hover:border-accent hover:bg-accent sm:right-3.5 sm:top-3.5 sm:h-10 sm:w-10"
-        >
-          <X className="h-5 w-5" aria-hidden="true" />
-        </button>
+      <div
+        className={`relative w-full bg-background-secondary shadow-2xl shadow-black ${
+          isFullscreen
+            ? "h-[100dvh] max-h-none max-w-none overflow-hidden rounded-none border-0"
+            : "max-h-[92vh] max-w-4xl overflow-y-auto rounded-2xl border border-border-subtle"
+        }`}
+      >
+        {!isFullscreen && (
+          <button
+            type="button"
+            onClick={() => void handleClose()}
+            aria-label="Modalı bağla"
+            className="absolute right-3 top-3 z-40 flex h-9 w-9 items-center justify-center rounded-full bg-accent text-white shadow-md transition-colors hover:bg-accent-hover sm:right-3.5 sm:top-3.5 sm:h-10 sm:w-10"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        )}
 
         {/* Video pleyer və idarəetmə paneli */}
         <div
           ref={playerWrapperRef}
           className={`relative w-full bg-black ${
-            isFullscreen ? "flex h-screen w-screen flex-col justify-between" : ""
+            isFullscreen
+              ? "flex h-[100dvh] w-screen flex-col justify-between"
+              : ""
           }`}
         >
+          {/* Tam ekran rejimində yuxarı sol küncdə sürətli çıxış düyməsi */}
+          {isFullscreen && (
+            <div className="flex items-center justify-between bg-black/90 px-4 py-2.5">
+              <span className="truncate font-display text-sm font-bold text-white">
+                {movie.title}
+              </span>
+              <button
+                type="button"
+                onClick={() => void toggleFullscreen()}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-accent px-3.5 text-xs font-semibold text-white shadow-md hover:bg-accent-hover"
+              >
+                <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Tam ekrandan çıx</span>
+              </button>
+            </div>
+          )}
+
           <div
             className={`relative w-full bg-black ${
-              isFullscreen ? "flex-1" : "aspect-video"
+              isFullscreen ? "min-h-0 flex-1" : "aspect-video"
             }`}
           >
             {isPlaying ? (
@@ -366,13 +445,13 @@ export function MovieDetailModal({
                 />
                 <div
                   aria-hidden="true"
-                  className="absolute inset-0 bg-gradient-to-t from-background-secondary via-black/35 to-black/20"
+                  className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/20"
                 />
                 <button
                   type="button"
                   onClick={() => setIsPlaying(true)}
                   aria-label={`${movie.title} filmini YouTube-da oynat`}
-                  className="group absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent/90 text-white shadow-2xl shadow-accent/40 ring-4 ring-white/20 transition-all duration-200 hover:scale-110 hover:bg-accent sm:h-20 sm:w-20"
+                  className="group absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-white shadow-2xl shadow-accent/40 ring-4 ring-white/25 transition-all duration-200 hover:scale-110 hover:bg-accent-hover sm:h-20 sm:w-20"
                 >
                   <Play
                     className="ml-1 h-7 w-7 fill-white sm:h-8 sm:w-8"
@@ -386,7 +465,7 @@ export function MovieDetailModal({
           {isPlaying && (
             <div className="border-t border-white/10 bg-[#0f0f0f] px-3 py-2.5 sm:px-4">
               <div className="flex items-center gap-2.5 sm:gap-3">
-                <span className="w-11 shrink-0 text-[11px] font-medium tabular-nums text-foreground-secondary sm:w-14 sm:text-xs">
+                <span className="w-11 shrink-0 text-[11px] font-medium tabular-nums text-neutral-300 sm:w-14 sm:text-xs">
                   {formatTime(currentTime)}
                 </span>
 
@@ -419,7 +498,7 @@ export function MovieDetailModal({
                   className="h-2 w-full cursor-pointer appearance-none rounded-full accent-accent [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent [&::-webkit-slider-thumb]:shadow-md"
                 />
 
-                <span className="w-11 shrink-0 text-right text-[11px] font-medium tabular-nums text-foreground-secondary sm:w-14 sm:text-xs">
+                <span className="w-11 shrink-0 text-right text-[11px] font-medium tabular-nums text-neutral-300 sm:w-14 sm:text-xs">
                   {formatTime(duration)}
                 </span>
               </div>
@@ -429,7 +508,7 @@ export function MovieDetailModal({
                   <button
                     type="button"
                     onClick={handleTogglePlayPause}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-accent px-3 text-xs font-semibold text-white transition-colors hover:bg-accent-hover"
                   >
                     {isVideoPaused ? (
                       <>
@@ -448,7 +527,7 @@ export function MovieDetailModal({
                     type="button"
                     onClick={() => handleSkip(-10)}
                     aria-label="10 saniyə geri"
-                    className="inline-flex h-8 items-center gap-1 rounded-full bg-white/10 px-2.5 text-xs font-semibold text-foreground-secondary transition-colors hover:bg-white/20 hover:text-white sm:px-3"
+                    className="inline-flex h-8 items-center gap-1 rounded-full bg-white/15 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-accent sm:px-3"
                   >
                     <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>-10s</span>
@@ -458,7 +537,7 @@ export function MovieDetailModal({
                     type="button"
                     onClick={() => handleSkip(10)}
                     aria-label="10 saniyə irəli"
-                    className="inline-flex h-8 items-center gap-1 rounded-full bg-white/10 px-2.5 text-xs font-semibold text-foreground-secondary transition-colors hover:bg-white/20 hover:text-white sm:px-3"
+                    className="inline-flex h-8 items-center gap-1 rounded-full bg-white/15 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-accent sm:px-3"
                   >
                     <span>+10s</span>
                     <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
@@ -487,127 +566,117 @@ export function MovieDetailModal({
           )}
         </div>
 
-        {/* Film məlumatları */}
-        <div className="p-4 sm:p-7">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-foreground-secondary sm:gap-2.5 sm:text-sm">
-            <span className="inline-flex items-center gap-1 rounded-md bg-accent/20 px-2.5 py-1 font-semibold text-accent ring-1 ring-accent/40">
-              <Star
-                className="h-3.5 w-3.5 fill-accent text-accent"
-                aria-hidden="true"
-              />
-              {movie.rating.toFixed(1)}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-foreground">
-              <Calendar
-                className="h-3.5 w-3.5 text-foreground-secondary"
-                aria-hidden="true"
-              />
-              {movie.year}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-white/10 px-2.5 py-1 text-foreground-secondary">
-              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-              {movie.duration}
-            </span>
-          </div>
-
-          <h2
-            id="movie-modal-title"
-            className="mt-3 font-display text-xl font-extrabold tracking-tight text-foreground sm:text-3xl"
-          >
-            {movie.title}
-          </h2>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            {movie.genres.map((genre) => (
-              <span
-                key={genre}
-                className="rounded-full border border-border-subtle bg-background-elevated px-3 py-1 text-xs font-medium text-foreground-secondary"
-              >
-                {genre}
+        {/* Film məlumatları (Tam ekranda gizlənir ki, iPhone-da yalnız video görünsün) */}
+        {!isFullscreen && (
+          <div className="p-4 sm:p-7">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-foreground-secondary sm:gap-2.5 sm:text-sm">
+              <span className="inline-flex items-center gap-1 rounded-md bg-accent px-2.5 py-1 font-semibold text-white">
+                <Star
+                  className="h-3.5 w-3.5 fill-white text-white"
+                  aria-hidden="true"
+                />
+                {movie.rating.toFixed(1)}
               </span>
-            ))}
-          </div>
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-background-elevated px-2.5 py-1 font-semibold text-foreground">
+                <Calendar
+                  className="h-3.5 w-3.5 text-accent"
+                  aria-hidden="true"
+                />
+                {movie.year}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-background-elevated px-2.5 py-1 text-foreground-secondary">
+                <Clock className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+                {movie.duration}
+              </span>
+            </div>
 
-          <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-            <button
-              type="button"
-              onClick={() => setIsPlaying((prev) => !prev)}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent-hover active:scale-[0.98]"
+            <h2
+              id="movie-modal-title"
+              className="mt-3 font-display text-xl font-extrabold tracking-tight text-foreground sm:text-3xl"
             >
-              <Play className="h-4 w-4 fill-white" aria-hidden="true" />
-              <span>{isPlaying ? "Posteri göstər" : "YouTube-da izlə"}</span>
-            </button>
+              {movie.title}
+            </h2>
 
-            {isPlaying && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {movie.genres.map((genre) => (
+                <span
+                  key={genre}
+                  className="rounded-full border border-border-subtle bg-background-elevated px-3 py-1 text-xs font-semibold text-foreground-secondary"
+                >
+                  {genre}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               <button
                 type="button"
-                onClick={() => void toggleFullscreen()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/20 bg-background-elevated px-5 text-sm font-semibold text-foreground transition-colors hover:border-white/35 hover:bg-white/10"
+                onClick={() => setIsPlaying((prev) => !prev)}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-accent px-6 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent-hover active:scale-[0.98]"
               >
-                {isFullscreen ? (
+                <Play className="h-4 w-4 fill-white" aria-hidden="true" />
+                <span>{isPlaying ? "Posteri göstər" : "YouTube-da izlə"}</span>
+              </button>
+
+              {isPlaying && (
+                <button
+                  type="button"
+                  onClick={() => void toggleFullscreen()}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white shadow-md shadow-accent/25 transition-all hover:bg-accent-hover active:scale-[0.98]"
+                >
+                  <Maximize2 className="h-4 w-4" aria-hidden="true" />
+                  <span>Tam ekran</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => onToggleWatchlist(movie)}
+                aria-pressed={isInWatchlist}
+                className={`inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-all active:scale-[0.98] ${
+                  isInWatchlist
+                    ? "bg-accent text-white shadow-md shadow-accent/25 hover:bg-accent-hover"
+                    : "border border-accent/40 bg-accent/10 text-accent hover:bg-accent hover:text-white"
+                }`}
+              >
+                {isInWatchlist ? (
                   <>
-                    <Minimize2 className="h-4 w-4" aria-hidden="true" />
-                    <span>Tam ekrandan çıx</span>
+                    <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
+                    <span>Siyahıdan çıxar</span>
                   </>
                 ) : (
                   <>
-                    <Maximize2 className="h-4 w-4" aria-hidden="true" />
-                    <span>Tam ekran</span>
+                    <BookmarkPlus className="h-4 w-4" aria-hidden="true" />
+                    <span>Siyahıya əlavə et</span>
                   </>
                 )}
               </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => onToggleWatchlist(movie)}
-              aria-pressed={isInWatchlist}
-              className={`inline-flex h-11 items-center justify-center gap-2 rounded-full border px-5 text-sm font-semibold transition-all active:scale-[0.98] ${
-                isInWatchlist
-                  ? "border-accent/60 bg-accent/20 text-white hover:bg-accent/30"
-                  : "border-white/20 bg-background-elevated text-foreground hover:border-white/35 hover:bg-white/10"
-              }`}
-            >
-              {isInWatchlist ? (
-                <>
-                  <BookmarkCheck
-                    className="h-4 w-4 text-accent"
-                    aria-hidden="true"
-                  />
-                  <span>Siyahıdan çıxar</span>
-                </>
-              ) : (
-                <>
-                  <BookmarkPlus className="h-4 w-4" aria-hidden="true" />
-                  <span>Siyahıya əlavə et</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          <p className="mt-5 text-sm leading-relaxed text-foreground-secondary sm:text-base">
-            {movie.description}
-          </p>
-
-          <div className="mt-6 grid gap-3 border-t border-border-subtle pt-5 text-sm sm:grid-cols-2">
-            <div>
-              <span className="block text-xs font-medium uppercase tracking-wider text-foreground-muted">
-                Rejissor
-              </span>
-              <span className="mt-1 block font-medium text-foreground">
-                {movie.director}
-              </span>
             </div>
-            <div>
-              <span className="block text-xs font-medium uppercase tracking-wider text-foreground-muted">
-                Rollarda
-              </span>
-              <span className="mt-1 block font-medium text-foreground">
-                {movie.cast.join(", ")}
-              </span>
+
+            <p className="mt-5 text-sm leading-relaxed text-foreground-secondary sm:text-base">
+              {movie.description}
+            </p>
+
+            <div className="mt-6 grid gap-3 border-t border-border-subtle pt-5 text-sm sm:grid-cols-2">
+              <div>
+                <span className="block text-xs font-semibold uppercase tracking-wider text-foreground-muted">
+                  Rejissor
+                </span>
+                <span className="mt-1 block font-semibold text-foreground">
+                  {movie.director}
+                </span>
+              </div>
+              <div>
+                <span className="block text-xs font-semibold uppercase tracking-wider text-foreground-muted">
+                  Rollarda
+                </span>
+                <span className="mt-1 block font-semibold text-foreground">
+                  {movie.cast.join(", ")}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

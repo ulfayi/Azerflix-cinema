@@ -66,7 +66,7 @@ export default function WatchlistPage() {
             Mənim siyahım
           </h1>
           {isLoaded && (
-            <span className="rounded-full bg-background-elevated px-3 py-1 text-xs font-medium text-foreground-secondary">
+            <span className="rounded-full bg-background-elevated px-3 py-1 text-xs font-semibold text-foreground-secondary">
               {watchlistMovies.length} film
             </span>
           )}
@@ -79,7 +79,7 @@ export default function WatchlistPage() {
               <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
                 Təsadüfi tövsiyə
               </span>
-              <h3 className="mt-0.5 truncate font-display text-lg font-bold text-white">
+              <h3 className="mt-0.5 truncate font-display text-lg font-bold text-foreground">
                 {recommendedMovie.title}
               </h3>
               <p className="text-xs text-foreground-secondary">
@@ -90,7 +90,7 @@ export default function WatchlistPage() {
               <button
                 type="button"
                 onClick={() => setSelectedMovie(recommendedMovie)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-bold text-black hover:bg-white/90"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-xs font-bold text-white shadow-sm hover:bg-accent-hover"
               >
                 <Info className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Ətraflı</span>
@@ -99,7 +99,7 @@ export default function WatchlistPage() {
                 type="button"
                 onClick={() => setRecommendedMovie(null)}
                 aria-label="Tövsiyəni bağla"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle text-foreground-secondary hover:text-white"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle text-foreground-secondary hover:border-accent hover:text-accent"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -126,7 +126,7 @@ export default function WatchlistPage() {
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-foreground-secondary">
               Film kartlarının sağ üst küncündəki işarəyə və ya film pəncərəsindəki{" "}
-              <strong className="text-white">&ldquo;Siyahıya əlavə et&rdquo;</strong>{" "}
+              <strong className="text-foreground">&ldquo;Siyahıya əlavə et&rdquo;</strong>{" "}
               düyməsinə klikləyərək filmləri bu brauzerdə yadda saxlaya bilərsiniz.
             </p>
             <Link
